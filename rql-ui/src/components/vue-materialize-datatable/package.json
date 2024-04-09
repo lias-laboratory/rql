@@ -1,0 +1,78 @@
+{
+  "_from": "vue-materialize-datatable",
+  "_id": "vue-materialize-datatable@0.7.3",
+  "_inBundle": false,
+  "_integrity": "sha512-qOVaUPfNbmBFzZgHYsWl8n2XwsG4H1Y2yz9U0pdm/wcbNeN1lcfcAhCEq5A0a3AaxdefETnk01ndjw60iT9ixg==",
+  "_location": "/vue-materialize-datatable",
+  "_phantomChildren": {
+    "envify": "3.4.1"
+  },
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "vue-materialize-datatable",
+    "name": "vue-materialize-datatable",
+    "escapedName": "vue-materialize-datatable",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/vue-materialize-datatable/-/vue-materialize-datatable-0.7.3.tgz",
+  "_shasum": "1a7aa048f0a9bc8b4df9b6c2b90b371d009bb8f2",
+  "_spec": "vue-materialize-datatable",
+  "_where": "C:\\Raedt\\CaldersV1\\rql\\rql-ui",
+  "author": {
+    "name": "Yousef Sultan",
+    "email": "yousef.su.2000@gmail.com"
+  },
+  "bugs": {
+    "url": "https://github.com/MicroDroid/vue-materialize-datatable/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "babel-runtime": "^6.0.0",
+    "fuse.js": "^2.6.2",
+    "vue": "^1.0.21"
+  },
+  "deprecated": false,
+  "description": "Datatable for VueJS with Materialize",
+  "devDependencies": {
+    "babel-core": "^6.0.0",
+    "babel-loader": "^6.0.0",
+    "babel-plugin-transform-runtime": "^6.0.0",
+    "babel-preset-es2015": "^6.0.0",
+    "babel-preset-stage-2": "^6.0.0",
+    "babel-register": "^6.0.0",
+    "css-loader": "^0.23.0",
+    "node-sass": "^3.8.0",
+    "sass-loader": "^4.0.0",
+    "vue-html-loader": "^1.2.3",
+    "vue-loader": "^8.3.0",
+    "vue-style-loader": "^1.0.0",
+    "webpack": "^1.12.2"
+  },
+  "homepage": "https://github.com/MicroDroid/vue-materialize-datatable",
+  "keywords": [
+    "Vue",
+    "Datatable",
+    "Materialize",
+    "Table Component"
+  ],
+  "license": "MIT",
+  "main": "./src/DataTable.vue",
+  "name": "vue-materialize-datatable",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MicroDroid/vue-materialize-datatable.git"
+  },
+  "scripts": {
+    "build": "webpack",
+    "demo": "cd docs && webpack"
+  },
+  "version": "0.7.3"
+}

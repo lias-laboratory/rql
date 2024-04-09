@@ -1,0 +1,418 @@
+options
+{
+  static = false;
+  SUPPORT_CLASS_VISIBILITY_PUBLIC = false;
+}
+
+PARSER_BEGIN(RQLParser)
+package fr.ensma.lias.rql.rqlgrammar;
+import java.io.StringReader;
+import java.io.Reader;
+import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
+
+public class RQLParser {
+    private List<String> attributes;
+    private List<String> tupVarList = new ArrayList<String>();
+    private String sqlStatement;
+    private String rqlVar;
+    private String rqlConditions;
+    private String sqlConditions;
+    
+    public List<String> getTupVarList() {
+      return tupVarList;
+    }
+    
+    public String getSqlStatement() {
+      return sqlStatement;
+    }
+    
+    public String getSqlConditions() {
+      return sqlConditions;
+    }
+
+    public List<String> getAttributeList() {
+      return Collections.unmodifiableList(attributes);
+    }
+    
+    public RQLParser(String s) {
+        this((Reader)(new StringReader(s)));
+    }
+    
+    public String sqlCondition(String attributeName) throws ParseException {
+    	//return rqlConditions.replace(rqlVar, attributeName);
+    	Pattern regex = Pattern.compile("(^|[^0-9a-zA-Z])" + rqlVar.replace("$", "\\$") +
+    	                                "($|[^0-9a-zA-Z])");
+    	Matcher matcher = regex.matcher(rqlConditions);
+    	if (matcher.find() == false) {
+    	    throw new ParseException("Attribute Variable (" + rqlVar +
+    	            ") not found in condition (" + rqlConditions + ")");
+    	}
+    	StringBuffer buf = new StringBuffer();
+    	matcher.reset();
+    	while (matcher.find()) {
+    		matcher.appendReplacement(buf,
+    		        matcher.group().replace(rqlVar, attributeName));
+    	}
+    	matcher.appendTail(buf);
+    	return buf.toString();
+    }
+    
+    public static RQLParser parse(String rqlQuery)
+            throws ParseException {
+        RQLParser parser = new RQLParser(rqlQuery);
+        try {
+        	parser.rqlQuery();
+        } catch (TokenMgrError e) {
+        	e.printStackTrace();
+        	throw new ParseException(e.getMessage());
+       	}
+        return(parser);
+    }
+
+    public void improve() {
+        /* purely cosmetic part */
+        /* trim sqlQuery */
+		if (sqlStatement.charAt(sqlStatement.length() - 1) == '\n') {
+			sqlStatement = sqlStatement.substring(0, sqlStatement.length() - 1);
+		}
+		sqlStatement = sqlStatement.trim();
+		/* trim rqlConditions */
+		while (rqlConditions.charAt(rqlConditions.length() - 1) == '\n') {
+			rqlConditions =
+			        rqlConditions.substring(0, rqlConditions.length() - 1);
+		}
+		rqlConditions = rqlConditions.trim();
+		/* trim sqlConditions */
+        if (sqlConditions != null) {
+		    while (sqlConditions.charAt(sqlConditions.length() - 1) == '\n') {
+    			sqlConditions =
+	    		        sqlConditions.substring(0, sqlConditions.length() - 1);
+    		}
+		    sqlConditions = sqlConditions.trim();
+		}
+    }
+    
+    public String oracleQuery() throws ParseException {
+        improve();
+        /* Oracle syntax */
+        StringBuffer query = new StringBuffer();
+        query.append("SELECT count(*), ag FROM (\n");
+		query.append("SELECT\n(");
+		for (int i = 0; i < attributes.size(); i++) {
+			if (i > 0) {
+				query.append(" ||");
+			}
+			query.append("\n    CASE WHEN ");
+			query.append(sqlCondition(attributes.get(i)));
+			query.append(" THEN '");
+			query.append(Integer.toString(i));
+			query.append(" ' END");
+		}
+		query.append("\n) as ag\nFROM ");
+		query.append(sqlStatement);
+		if (sqlConditions != null) {
+		  query.append("\nWHERE ");
+		  query.append(sqlConditions);
+		}
+		query.append("\n)\nGROUP BY ag\nORDER BY ag ASC");
+		return query.toString();
+    }
+    
+    public String mysqlQuery() throws ParseException {
+        improve();
+        /* MySQL syntax */
+        StringBuffer query = new StringBuffer();
+        query.append("SELECT count(*), ag FROM (\n");
+		query.append("SELECT\n(\n    CONCAT(");
+		for (int i = 0; i < attributes.size(); i++) {
+			if (i > 0) {
+				query.append(",");
+			}
+			query.append("\n        CASE WHEN ");
+			query.append(sqlCondition(attributes.get(i)));
+			query.append(" THEN '");
+			query.append(Integer.toString(i));
+			query.append(" ' ELSE '' END");
+		}
+		query.append("\n    )\n) as ag\nFROM ");
+		query.append(sqlStatement);
+		if (sqlConditions != null) {
+		  query.append("\nWHERE ");
+		  query.append(sqlConditions);
+		}
+		query.append("\n) t1\nGROUP BY ag\nORDER BY ag ASC");
+		return query.toString();
+    }
+    public String postgresQuery() throws ParseException {
+        improve();
+        /* Postgresql syntax */
+        StringBuffer query = new StringBuffer();
+        query.append("SELECT count(*), ag FROM (\n");
+		query.append("SELECT\n(\n    CONCAT(");
+		for (int i = 0; i < attributes.size(); i++) {
+			if (i > 0) {
+				query.append(",");
+			}
+			query.append("\n        CASE WHEN ");
+			query.append(sqlCondition(attributes.get(i)));
+			query.append(" THEN '");
+			query.append(Integer.toString(i));
+			query.append(" ' ELSE '' END");
+		}
+		query.append("\n    )\n) as ag\nFROM ");
+		query.append(sqlStatement);
+		if (sqlConditions != null) {
+		  query.append("\nWHERE ");
+		  query.append(sqlConditions);
+		}
+		query.append("\n) as Base\nGROUP BY ag\nORDER BY ag ASC");
+		return query.toString();
+    }
+}
+PARSER_END(RQLParser)
+
+SKIP :
+{
+    " "
+|   "\t"
+|   "\n"
+|   "\r"
+|   "\r\n"
+}
+
+TOKEN :
+{
+    < LEFT_PAR : "(" >
+|   < RIGHT_PAR : ")" >
+|   < COMMA : "," >
+|   < CONDITION : "CONDITION" | "condition" >
+|   < FINDRULES : "FINDRULES" | "findrules" >
+|   < IS : "IS" | "is" >
+|   < ON : "ON" | "on" >
+|   < OVER : "OVER" | "over" >
+|   < SCOPE : "SCOPE" | "scope" > 
+|   < WHERE : "WHERE" | "where" >
+|   < WORD : ( <LETTER> | "_" | "$" ) ( <LETTER> | <DIGIT> | "_" )* >
+|   < #LETTER : ["a"-"z","A"-"Z"] >
+|   < #DIGIT : ["0"-"9"] >
+|   < OTHER : ~[] >
+}
+
+<SQL> SKIP:
+{
+    ""
+}
+
+<SQL> TOKEN:
+{
+    < SQL_LEFT_PAR : "(" >
+|   < SQL_RIGHT_PAR : ")" >
+|   < SQL_OTHER : ~[] >
+}
+
+<SQLCOND> SKIP:
+{
+    ""
+}
+
+<SQLCOND> TOKEN:
+{
+    < SQLCOND_CONDITION : "CONDITION" | "condition" >
+|   < SQLCOND_OTHER : ~[] >
+}
+
+<SQLFORM> SKIP:
+{
+    ""
+}
+
+<SQLFORM> TOKEN:
+{
+    < SQLFORM_OTHER : ~[] >
+}
+
+void rqlQuery() :
+{}
+{
+    <FINDRULES> <OVER>
+    attributeList()
+    <SCOPE>
+    this.sqlStatement = tupleVariableList()
+    (
+      <WHERE>
+      this.sqlConditions = sqlCondition()
+      //<CONDITION> in sqlCondition()
+    |
+      <CONDITION>
+    )
+    <ON>
+    attributeVariable()
+    <IS>
+    miningFormula()
+    <EOF>
+}
+
+void attributeList() :
+{}
+{
+    this.attributes = idList()
+}
+
+List<String> idList() :
+{
+  List<String> list = new ArrayList<String>();
+  Token t;
+}
+{
+  t = <WORD>
+  { list.add(t.image); }
+  (
+    <COMMA>
+    t = <WORD>
+    { list.add(t.image); }
+  )*
+  { return list; }
+}
+
+String tupleVariableList() :
+{
+  List<String> tupVarList;
+  Token t;
+  StringBuilder buf = new StringBuilder();
+  String query = null;
+}
+{
+  tupVarList = idList()
+  { this.tupVarList.addAll(tupVarList); }
+  (
+    <LEFT_PAR>
+    query = sqlStatement()
+    //<RIGHT_PAR> in sqlStatement()
+    {
+      for (int i = 0; i < tupVarList.size(); i++) {
+        if (i > 0) {
+          buf.append(", ");
+        }
+        buf.append("(");
+        buf.append(query);
+        buf.append(") ");
+        buf.append(tupVarList.get(i));
+      }
+    }
+  |
+    t = <WORD>
+    {
+      for (int i = 0; i < tupVarList.size(); i++) {
+        if (i > 0) {
+          buf.append(", ");
+        }
+        buf.append(t.image);
+        buf.append(" ");
+        buf.append(tupVarList.get(i));
+      }
+    } 
+  )
+  (
+    <COMMA>
+    query = tupleVariableList()
+    { buf.append(", "); }
+    { buf.append(query); }
+  )?
+  { return buf.toString(); }
+}
+
+void attributeVariable() :
+{
+  Token t;
+}
+{
+  t = <WORD>
+  { this.rqlVar = t.image; }
+}
+
+void miningFormula() :
+{}
+{
+  this.rqlConditions = sql()
+}
+
+String sqlStatement() :
+{
+  Token t;
+  StringBuffer buf = new StringBuffer();
+  String subStatement;
+}
+{
+  { token_source.SwitchTo(SQL); }
+  (
+    t = <SQL_OTHER>
+    { buf.append(t.image); }
+  |
+    t = <SQL_LEFT_PAR>
+    { buf.append(t.image); }
+    subStatement = sqlSubStatement()
+    { buf.append(subStatement); }
+    t = <SQL_RIGHT_PAR>
+    { buf.append(t.image); }
+  )*
+  <SQL_RIGHT_PAR>
+  { token_source.SwitchTo(DEFAULT); }
+  { return buf.toString(); }
+}
+
+String sqlSubStatement() :
+{
+  Token t;
+  StringBuffer buf = new StringBuffer();
+  String subStatement;
+}
+{
+  (
+    t = <SQL_OTHER>
+    { buf.append(t.image); }
+  |
+    t = <SQL_LEFT_PAR>
+    { buf.append(t.image); }
+    subStatement = sqlSubStatement()
+    { buf.append(subStatement); }
+    t = <SQL_RIGHT_PAR>
+    { buf.append(t.image); }
+  )*
+  { return buf.toString(); }
+}
+
+String sqlCondition() :
+{
+  Token t;
+  StringBuffer buf = new StringBuffer();
+}
+{
+  { token_source.SwitchTo(SQLCOND); }
+  (
+    t = <SQLCOND_OTHER>
+    { buf.append(t.image); }
+  )*
+  <SQLCOND_CONDITION>
+  { token_source.SwitchTo(DEFAULT); }
+  { return buf.toString(); }
+}
+
+String sql() :
+{
+  Token t;
+  StringBuffer buf = new StringBuffer();
+}
+{
+  { token_source.SwitchTo(SQLFORM); }
+  (
+    t = <SQLFORM_OTHER>
+    { buf.append(t.image); }
+  )*
+  { token_source.SwitchTo(DEFAULT); } 
+  { return buf.toString(); }
+}

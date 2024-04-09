@@ -1,0 +1,158 @@
+options
+{
+  static = false;
+  SUPPORT_CLASS_VISIBILITY_PUBLIC = false;
+}
+
+PARSER_BEGIN(RulesParser)
+package fr.ensma.lias.rql.rulesgrammar;
+
+import java.io.BufferedWriter;
+import java.io.Closeable;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.List;
+import java.io.OutputStream;
+
+public class RulesParser implements Closeable {
+    private OutputStream out;
+    private List<String> atts;
+    
+	public RulesParser(String inFile, OutputStream outStream,
+	        List<String> attributeList) throws IOException {
+	    this((Reader)(new FileReader(inFile))); 
+	    out = outStream;
+	    atts = attributeList;
+	}
+
+	public void close() throws IOException {
+		out.flush();
+		out.close();
+	}
+
+   public static void translate(String inFile, OutputStream outStream, List<String> attributeList) throws ParseException, IOException {
+        RulesParser parser = new RulesParser(inFile,outStream, attributeList);
+        parser.rules(null, 0, null);
+        parser.close();
+    }
+
+	public static void translate(String inFile, OutputStream outStream, List<String> attributeList, List<String> previewExact, int previewSize, int[] counts) throws ParseException, IOException {
+		RulesParser parser = new RulesParser(inFile,outStream, attributeList);
+		parser.rules(previewExact, previewSize, counts);
+		parser.close();
+	}
+}
+
+PARSER_END(RulesParser)
+
+SKIP :
+{
+    " "
+|   "\t"
+|   "\n"
+|   "\r"
+|   "\r\n"
+}
+
+TOKEN :
+{
+    < IMPLICATION : "=>" >
+|   < EMPTY : "-1" >    
+|   < INTEGER : ( <DIGIT> )* >
+|   < #DIGIT : ["0"-"9"] >
+|   < OTHER : ~[] >
+}
+
+void rules(List<String> previewExact, int previewSize, int[] counts) throws IOException :
+{
+    String rl;
+}
+{
+    (
+        rl = rule()
+        {
+           if (previewExact != null)
+          {
+            if ( previewExact.size() < previewSize)
+            {
+              previewExact.add(rl);
+              counts[0]++;
+            }
+          }
+        }
+	)*
+	<EOF>
+}
+
+String rule() throws IOException :
+{
+	Token t;
+	StringBuilder rule = new StringBuilder();
+}
+{
+	
+    /* left member: list of attributes or empty */
+    (
+        (
+    		t = <INTEGER>
+    		{ rule.append(atts.get(Integer.parseInt(t.image)) + " "); 
+		}
+   		)+
+   	|
+   		(
+   		    <EMPTY>
+   		    { rule.append("empty "); }
+   		)
+    )
+    <IMPLICATION>
+    { rule.append("=>"); }
+    /* right member: single attribute */
+    t = <INTEGER>
+    { rule.append(" " + atts.get(Integer.parseInt(t.image)));}
+    t = <INTEGER>
+    { rule.append(" " + Integer.parseInt(t.image));}
+    t = <INTEGER>
+    { rule.append(" " + Integer.parseInt(t.image));}
+    t = <INTEGER>
+    { rule.append(" " + Integer.parseInt(t.image));}
+    t = <INTEGER>
+    { rule.append(" " + Integer.parseInt(t.image) + "\n");}
+    { out.write(rule.toString().getBytes()); }
+    { return rule.toString(); }
+}
+
+boolean metadata() throws IOException :
+{
+    Token t;
+    int nX;
+    int nXY;
+}
+{
+    /* tuples */
+    t = <INTEGER>
+    // { out.write("\t" + t.image);}
+    /* nX */
+    t = <INTEGER>
+    // { out.write("\t" + t.image); }
+    { nX = Integer.parseInt(t.image); }
+    /* nY */
+    t = <INTEGER>
+    // { out.write("\t" + t.image); }
+    /* nXY */
+    t = <INTEGER>
+    {
+      // out.write("\t" + t.image + "\n");
+      nXY = Integer.parseInt(t.image);
+      if (nX == nXY)
+      {
+        out.write("\t(exact)\n".getBytes());
+      }
+      else
+      {
+        out.write("\t(G&L cover)\n".getBytes());
+      }
+      return (nX == nXY);
+    }
+}

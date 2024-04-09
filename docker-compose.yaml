@@ -1,0 +1,58 @@
+services:
+
+  backend:
+    container_name: rql_backend
+    build: rql-backend/
+    image: rql:backend-1.1.0-SNAPSHOT
+    depends_on:
+      - db
+    networks:
+      - rqlnetwork
+
+  db:
+    container_name: rql_db
+    image: postgres:9.6
+    volumes:
+     - ./db/rql:/var/lib/postgresql/data
+    networks:
+      - rqlnetwork
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+
+  business_db:
+    container_name: rql_business_db
+    image: postgres:9.6
+    volumes:
+      - ./db/business:/var/lib/postgresql/data
+    networks:
+      - rqlnetwork
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+
+  frontend:
+    container_name: rql_frontend
+    build: rql-ui/
+    image: rql:frontend-1.1.0-SNAPSHOT
+    depends_on:
+      - backend
+    networks:
+      - rqlnetwork
+
+  web:
+    container_name: rql_proxy
+    image: nginx:1.25.4
+    depends_on:
+      - frontend
+      - backend
+    volumes:
+      - ./nginx-conf:/etc/nginx/conf.d
+    ports:
+      - "80:80"
+    networks:
+      - rqlnetwork
+
+networks:
+  rqlnetwork:
+    name: rqlnetwork

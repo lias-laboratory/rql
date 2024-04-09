@@ -1,0 +1,68 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>rql-core</artifactId>
+	<description>Core module of RQL platform</description>
+
+	<parent>
+		<groupId>fr.ensma.lias</groupId>
+		<artifactId>rql-backend</artifactId>
+		<version>1.1.0-SNAPSHOT</version>
+	</parent>
+
+	<properties>
+		<!-- Dependencies -->
+		<ojdbc.version>11.2.0.4</ojdbc.version>
+		<javacc.version>2.6</javacc.version>
+		<postgresql.version>42.2.1</postgresql.version>
+		<json.version>20180130</json.version>
+		<jackson-databind.version>2.8.4</jackson-databind.version>
+
+		<!-- Maven Plugins -->
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>javacc-maven-plugin</artifactId>
+				<version>${javacc.version}</version>
+				<configuration>
+					<sourceDirectory>src</sourceDirectory>
+				</configuration>
+				<executions>
+					<execution>
+						<id>generate-javacc</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>javacc</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>com.oracle.database.jdbc</groupId>
+			<artifactId>ojdbc6</artifactId>
+			<version>${ojdbc.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>${postgresql.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>${json.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${jackson-databind.version}</version>
+		</dependency>
+	</dependencies>
+</project>
