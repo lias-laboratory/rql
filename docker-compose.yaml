@@ -34,6 +34,7 @@ services:
   frontend:
     container_name: rql_frontend
     build: rql-ui/
+    platform: linux/amd64
     image: rql:frontend-1.1.0-SNAPSHOT
     depends_on:
       - backend

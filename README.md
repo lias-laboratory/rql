@@ -18,11 +18,16 @@ You can read more about RQL using the following resources:
 
 RQL building and deployment have been tested on:
 
-* macOS Sonoma (with Docker Desktop),
+* macOS Sonoma x86 and ARM (with Docker Desktop),
 * Ubuntu 20.04.6 LTS
 * Debian 12.5
+* Raspberry Pi 5 with Pi OS Lite (64-bit)
 
 In fact, any operating system that supports [Docker](https://www.docker.com/) should be able to build RQL.
+
+The RQL front-end requires an x86 architecture.
+Its Docker container can be run on an emulated environment.
+On Linux ARM (e.g. Raspberry Pi), consider installing QEMU.
 
 ## Build
 
